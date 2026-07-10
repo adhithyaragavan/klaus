@@ -11,8 +11,11 @@ cached or hardcoded per-input.
 """
 from __future__ import annotations
 
+import html
+import re
 import sys
 import tempfile
+import textwrap
 from pathlib import Path
 
 import streamlit as st
@@ -32,16 +35,187 @@ TOP_K = 6
 
 st.set_page_config(page_title="Klaus — Contract Compliance Preview", page_icon="📄")
 
-st.title("Klaus — Contract Compliance Preview")
+# --- Visual identity: matches the pitch deck's ink / gold / verified-sage palette ---
+# NOTE: Streamlit's markdown renderer terminates a raw <style>...</style> passthrough block at
+# the first blank line inside it (rather than continuing to the closing tag) -- so this CSS is
+# deliberately written with zero blank lines between rules. Don't reformat with blank-line
+# separation between rule blocks, it will silently break and spill CSS text onto the page.
+_KLAUS_CSS = """<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #14171C;
+    --panel: #1B2028;
+    --border: #333840;
+    --text: #ECE8E0;
+    --muted: #8A8578;
+    --gold: #C98A3D;
+    --verified: #6FAE8C;
+}
+/* hide Streamlit chrome */
+#MainMenu, footer, header { visibility: hidden; }
+[data-testid="stToolbar"] { display: none; }
+[data-testid="stDecoration"] { display: none; }
+.stApp {
+    background: var(--bg);
+    color: var(--text);
+}
+.stApp, .stApp p, .stApp label, .stMarkdown, .stCaption {
+    font-family: "IBM Plex Sans", -apple-system, sans-serif;
+}
+.stApp span:not([data-testid="stIconMaterial"]) {
+    font-family: "IBM Plex Sans", -apple-system, sans-serif;
+}
+.klaus-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 26px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.klaus-h1 {
+    font-family: Georgia, "Iowan Old Style", serif;
+    font-weight: 400;
+    font-size: 2.4rem;
+    color: var(--text);
+    margin: 0 0 20px;
+    line-height: 1.1;
+}
+.klaus-answer {
+    font-family: Georgia, "Iowan Old Style", serif;
+    font-size: 1.08rem;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+}
+.klaus-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+}
+.klaus-panel .klaus-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+}
+.klaus-panel p {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.92rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin: 0;
+}
+.klaus-panel a { color: var(--text); }
+.klaus-panel code {
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 3px;
+    padding: 1px 5px;
+}
+.klaus-eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+}
+.klaus-citations { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.klaus-citation-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.klaus-badge {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--verified);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    white-space: nowrap;
+}
+.klaus-citation-quote {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.88rem;
+    color: var(--muted);
+}
+.stTextInput input {
+    background: var(--panel) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+    font-family: "IBM Plex Sans", sans-serif !important;
+}
+.stTextInput label, [data-testid="stCaptionContainer"], [data-testid="stFileUploader"] label {
+    font-family: "IBM Plex Sans", sans-serif !important;
+    color: var(--muted) !important;
+}
+.stButton > button, button[kind="primary"] {
+    background: var(--panel) !important;
+    color: var(--gold) !important;
+    border: 1px solid var(--gold) !important;
+    font-family: "IBM Plex Mono", monospace !important;
+    letter-spacing: 0.04em;
+    border-radius: 4px !important;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.stButton > button:hover, button[kind="primary"]:hover {
+    background: var(--gold) !important;
+    color: var(--bg) !important;
+    border-color: var(--gold) !important;
+}
+[data-testid="stFileUploader"] section {
+    background: var(--panel) !important;
+    border: 1px dashed var(--border) !important;
+}
+[data-testid="stFileUploaderFile"], [data-testid="stFileUploaderFileName"] {
+    background: var(--panel) !important;
+    border-radius: 4px;
+    font-family: "IBM Plex Sans", sans-serif !important;
+    color: var(--text) !important;
+}
+</style>"""
 
-st.warning(
-    "**This is a free, lightweight public preview** — it runs the same retrieval and "
-    "citation-grounding pipeline as production, but calls Groq's free API instead of an AMD "
-    "GPU (Streamlit's free tier has no GPU). The verified production backend serves "
-    "`Qwen/Qwen3-14B` via vLLM on real AMD ROCm hardware — see "
-    "[docs/AMD_VERIFICATION.md](https://github.com/adhithyaragavan/klaus/blob/main/docs/AMD_VERIFICATION.md) "
-    "for the actual captured run.",
-    icon="⚠️",
+st.markdown(_KLAUS_CSS, unsafe_allow_html=True)
+
+st.markdown(
+    textwrap.dedent(
+        """
+    <div class="klaus-topbar">
+        <span>Klaus</span>
+        <span>Track 3 · Preview backend: Groq</span>
+    </div>
+    """
+    ),
+    unsafe_allow_html=True,
+)
+
+st.markdown('<h1 class="klaus-h1">Contract Compliance Preview</h1>', unsafe_allow_html=True)
+
+st.markdown(
+    textwrap.dedent(
+        """
+    <div class="klaus-panel">
+      <div class="klaus-label">Preview — not production</div>
+      <p>This is a free, lightweight public preview — it runs the same retrieval and
+      citation-grounding pipeline as production, but calls Groq's free API instead of an AMD
+      GPU (Streamlit's free tier has no GPU). The verified production backend serves
+      <code>Qwen/Qwen3-14B</code> via vLLM on real AMD ROCm hardware — see
+      <a href="https://github.com/adhithyaragavan/klaus/blob/main/docs/AMD_VERIFICATION.md" target="_blank">docs/AMD_VERIFICATION.md</a>
+      for the actual captured run.</p>
+    </div>
+    """
+    ),
+    unsafe_allow_html=True,
 )
 
 st.write(
@@ -97,6 +271,16 @@ query = st.text_input("Your question", placeholder=example_queries[0])
 if using_sample_corpus:
     st.caption("Try: " + " · ".join(f"*{q}*" for q in example_queries))
 
+_CLAUSE_SHORT_RE = re.compile(r"^(Section|Article)\s+", re.IGNORECASE)
+_DOC_EXT_RE = re.compile(r"\.(txt|pdf)$", re.IGNORECASE)
+
+
+def _badge_label(document: str, clause: str) -> str:
+    short_doc = _DOC_EXT_RE.sub("", document)
+    short_clause = "§" + _CLAUSE_SHORT_RE.sub("", clause)
+    return f"{short_doc} {short_clause}"
+
+
 if st.button("Ask", type="primary") and query:
     if not api_key:
         st.error("GROQ_API_KEY is not configured for this deployment.")
@@ -105,12 +289,26 @@ if st.button("Ask", type="primary") and query:
             retrieved = retrieve(query, index, top_k=TOP_K)
             answer = generate_answer(query, retrieved, backend=GroqPreviewBackend(api_key, model))
 
-        st.subheader("Answer")
-        st.write(answer.answer)
+        st.markdown('<div class="klaus-eyebrow">Answer</div>', unsafe_allow_html=True)
+        # answer.answer comes from the LLM (indirectly influenced by uploaded, user-controlled
+        # document content) — escape before interpolating into unsafe HTML.
+        st.markdown(
+            f'<div class="klaus-answer">{html.escape(answer.answer)}</div>',
+            unsafe_allow_html=True,
+        )
 
         if answer.citations:
-            st.subheader("Citations")
-            for citation in answer.citations:
-                st.markdown(f"- **{citation.document}** {citation.clause}: {citation.quote_or_paraphrase}")
+            st.markdown('<div class="klaus-eyebrow">Citations</div>', unsafe_allow_html=True)
+            rows = "".join(
+                '<div class="klaus-citation-row">'
+                f'<span class="klaus-badge">{html.escape(_badge_label(c.document, c.clause))}</span>'
+                f'<span class="klaus-citation-quote">{html.escape(c.quote_or_paraphrase)}</span>'
+                "</div>"
+                for c in answer.citations
+            )
+            st.markdown(f'<div class="klaus-citations">{rows}</div>', unsafe_allow_html=True)
         else:
-            st.info("No grounded citation was found for this question.")
+            st.markdown(
+                '<div class="klaus-panel"><p>No grounded citation was found for this question.</p></div>',
+                unsafe_allow_html=True,
+            )
