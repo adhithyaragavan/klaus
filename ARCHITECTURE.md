@@ -6,7 +6,7 @@ On-prem, citation-grounded document compliance intelligence. This document is th
 
 ## 1. Design Principles
 
-1. **Nothing leaves the box.** Every component in the core path (embedding, retrieval, generation) must be runnable with zero outbound network calls. Any cloud call (e.g. optional Fireworks/Gemma routing) is an explicit, opt-in side-path — never the only path.
+1. **Nothing leaves the box.** Every component in the core path (embedding, retrieval, generation) must be runnable with zero outbound network calls. There is no cloud LLM path in this build.
 2. **No un-cited answers.** The generation layer must refuse to return a claim without a traceable source (document + clause/section id). This is enforced structurally (schema-level), not just prompted for.
 3. **Audit everything.** Every query, retrieval, and answer is logged immutably. The audit log is a first-class output, not an afterthought.
 4. **Clause-level, not chunk-level.** Retrieval granularity is the actual unit a compliance reviewer thinks in (a clause, a section) — not an arbitrary fixed-token window.
@@ -53,13 +53,7 @@ On-prem, citation-grounded document compliance intelligence. This document is th
                          │                 │   (append-only JSONL)   │  │
                          │                 └─────────────────────────┘  │
                          │                                              │
-                         └──────────────────────────┬───────────────────┘
-                                                     │ (optional, opt-in)
-                                                     ▼
-                                        ┌────────────────────────┐
-                                        │ Fireworks AI (Gemma)     │
-                                        │ non-sensitive triage tier│
-                                        └────────────────────────┘
+                         └──────────────────────────────────────────────┘
 ```
 
 ---
@@ -121,7 +115,7 @@ On-prem, citation-grounded document compliance intelligence. This document is th
   class LLMBackend(Protocol):
       def generate(self, prompt: str) -> str: ...
   ```
-  Three concrete implementations sit behind this protocol:
+  Two concrete implementations sit behind this protocol:
 
   1. **`ROCmVLLMBackend` — primary (on-prem, the demoed default).** Serves `Qwen/Qwen3-14B`
      via `vLLM` on an AMD Developer Cloud Radeon/RDNA3 (gfx1100) instance — chosen over Gemma
@@ -131,17 +125,10 @@ On-prem, citation-grounded document compliance intelligence. This document is th
      demonstrated fact, not a slide bullet — the recorded demo runs its grounded queries
      through this. Document setup/run instructions even if the AMD instance is only available
      briefly, since the production pitch depends on it.
-  2. **`FireworksGemmaBackend` — optional, opt-in cloud triage tier only.** Calls Gemma via
-     Fireworks AI (`gemma-4-31b-it` for answer quality on citation-critical generation;
-     `gemma-4-26b-a4b-it` as a faster/cheaper option when latency matters more). Reads
-     `FIREWORKS_API_KEY` and `FIREWORKS_BASE_URL` from the environment — never hardcoded.
-     Gated behind `KLAUS_ALLOW_CLOUD_TRIAGE=true` and **never the default** (see Immutable
-     Rule #2): sending clauses here is an outbound call, so it is reserved for explicitly
-     non-sensitive queries only.
-  3. **`LocalDevBackend` — offline iteration only.** `llama-cpp-python` or Ollama with any small
-     GGUF model (need not be Gemma). Used only while iterating on retrieval/chunking/citation
-     logic before AMD cloud access is wired up; never shown in the live/recorded demo or
-     referenced in the pitch's technical claims.
+  2. **`LocalDevBackend` — offline iteration only.** `llama-cpp-python` or Ollama with any small
+     GGUF model. Used only while iterating on retrieval/chunking/citation logic before AMD
+     cloud access is wired up; never shown in the live/recorded demo or referenced in the
+     pitch's technical claims.
 
 ### 3.7 Audit Logger (`src/audit_log.py`)
 - Input: query, retrieved clauses, generated answer, timestamp.
@@ -172,10 +159,9 @@ On-prem, citation-grounded document compliance intelligence. This document is th
 
 | Environment | LLM backend | Notes |
 |---|---|---|
-| Local dev (offline iteration only) | `LocalDevBackend` — `llama-cpp-python` / Ollama, any small GGUF (need not be Gemma) | Fast iteration on retrieval/chunking/citation logic; never the demoed backend |
+| Local dev (offline iteration only) | `LocalDevBackend` — `llama-cpp-python` / Ollama, any small GGUF | Fast iteration on retrieval/chunking/citation logic; never the demoed backend |
 | Hackathon demo / on-prem proof | `ROCmVLLMBackend` — `vLLM` serving `Qwen/Qwen3-14B` on an AMD Developer Cloud Radeon/RDNA3 (gfx1100) instance | **Primary demoed backend.** Runs the grounded queries in the recorded demo to prove "nothing leaves the box"; container still builds for `linux/amd64` |
 | Production target | `ROCmVLLMBackend` — `vLLM` on ROCm against AMD GPUs (Radeon/RDNA3 for the demo; Instinct/CDNA datacenter cards for larger-scale production deployments) | Same backend as the demo; this is the deployment the pitch's cost/privacy claims depend on |
-| Optional triage path | `FireworksGemmaBackend` — Fireworks AI hosted Gemma (`gemma-4-31b-it`, or `gemma-4-26b-a4b-it` for lower latency) | Opt-in only, **never the default**; explicitly non-sensitive queries only, toggled via `KLAUS_ALLOW_CLOUD_TRIAGE=true`; `FIREWORKS_API_KEY` / `FIREWORKS_BASE_URL` from env |
 
 ---
 

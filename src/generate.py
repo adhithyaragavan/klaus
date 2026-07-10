@@ -39,31 +39,6 @@ class ROCmVLLMBackend:
         return response.json()["choices"][0]["message"]["content"]
 
 
-class FireworksGemmaBackend:
-    """Opt-in cloud triage tier only — never the default (CLAUDE.md Immutable Rule #2/#6)."""
-
-    def __init__(self, api_key: str | None = None, base_url: str | None = None, model: str | None = None) -> None:
-        if os.environ.get("KLAUS_ALLOW_CLOUD_TRIAGE", "false").lower() != "true":
-            raise RuntimeError("FireworksGemmaBackend requires KLAUS_ALLOW_CLOUD_TRIAGE=true")
-        self.api_key = api_key or os.environ["FIREWORKS_API_KEY"]
-        self.base_url = base_url or os.environ["FIREWORKS_BASE_URL"]
-        self.model = model or os.environ.get("FIREWORKS_MODEL", "accounts/fireworks/models/gemma-4-31b-it")
-
-    def generate(self, prompt: str) -> str:
-        response = requests.post(
-            f"{self.base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {self.api_key}"},
-            json={
-                "model": self.model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.0,
-            },
-            timeout=60,
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
-
-
 class LocalDevBackend:
     """Offline iteration only, via Ollama's local HTTP API — never used in the live demo."""
 
@@ -90,8 +65,6 @@ def get_backend() -> LLMBackend:
     choice = os.environ.get("KLAUS_LLM_BACKEND", "rocm_vllm")
     if choice == "rocm_vllm":
         return ROCmVLLMBackend()
-    if choice == "fireworks":
-        return FireworksGemmaBackend()
     if choice == "local_dev":
         return LocalDevBackend()
     raise ValueError(f"Unknown KLAUS_LLM_BACKEND: {choice!r}")

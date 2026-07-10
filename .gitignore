@@ -4,3 +4,4 @@ __pycache__/
 audit_log/*.jsonl
 .env
 .DS_Store
+CLAUDE.md

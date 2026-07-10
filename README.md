@@ -74,12 +74,11 @@ pytest tests/
 ## LLM Backends
 
 Klaus's generation layer sits behind a swap-friendly `LLMBackend` protocol
-(`src/generate.py`) with three concrete implementations, selected via `KLAUS_LLM_BACKEND`:
+(`src/generate.py`) with two concrete implementations, selected via `KLAUS_LLM_BACKEND`:
 
 | Backend | `KLAUS_LLM_BACKEND` | Role | Network |
 |---|---|---|---|
 | `ROCmVLLMBackend` | `rocm_vllm` (default) | **Primary — the backend the live demo runs on.** `Qwen/Qwen3-14B` served via vLLM on an AMD Developer Cloud Radeon/RDNA3 (gfx1100) instance — chosen for vLLM's native, first-class support (Gemma 4 was too new at build time and only had a bug-prone generic fallback implementation). This is what makes "nothing leaves the box" a demonstrated fact rather than a slide claim. | On-prem only |
-| `FireworksGemmaBackend` | `fireworks` | Opt-in cloud triage tier for explicitly non-sensitive queries. Gated behind `KLAUS_ALLOW_CLOUD_TRIAGE=true` — refuses to construct otherwise. **Never the default, never shown as the primary demo path.** | Outbound to Fireworks AI |
 | `LocalDevBackend` | `local_dev` | Offline iteration only, via a local Ollama instance. Used during this build to test retrieval/chunking/citation logic before AMD cloud access was wired up. **Never used in the live/recorded demo.** | Local only |
 
 See `.env.example` for the full set of environment variables each backend reads (base URLs,
