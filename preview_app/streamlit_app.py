@@ -12,6 +12,7 @@ cached or hardcoded per-input.
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
 
 import streamlit as st
@@ -44,8 +45,9 @@ st.warning(
 )
 
 st.write(
-    "Ask a question about the sample vendor contracts below. Every answer includes a citation "
-    "to the exact document and clause it came from — Klaus never answers from general knowledge."
+    "Ask a question about the sample vendor contracts, or upload your own document below. "
+    "Every answer includes a citation to the exact document and clause it came from — Klaus "
+    "never answers from general knowledge."
 )
 
 
@@ -56,8 +58,32 @@ def get_index():
     return build_index(clauses), len(documents), len(clauses)
 
 
-index, doc_count, clause_count = get_index()
-st.caption(f"Loaded {doc_count} sample contracts, {clause_count} clauses.")
+@st.cache_resource(show_spinner="Indexing your uploaded document(s)...")
+def build_uploaded_index(file_data: tuple[tuple[str, bytes], ...]):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
+        for name, data in file_data:
+            (tmp_path / name).write_bytes(data)
+        documents = load_documents(tmpdir)
+        clauses = [clause for document in documents for clause in chunk_document(document)]
+        return build_index(clauses), len(documents), len(clauses)
+
+
+uploaded_files = st.file_uploader(
+    "Upload your own contract(s) (.txt or .pdf) to query instead of the sample corpus",
+    type=["txt", "pdf"],
+    accept_multiple_files=True,
+)
+
+if uploaded_files:
+    file_data = tuple((f.name, f.getvalue()) for f in uploaded_files)
+    index, doc_count, clause_count = build_uploaded_index(file_data)
+    st.caption(f"Indexed {doc_count} uploaded document(s), {clause_count} clauses.")
+    using_sample_corpus = False
+else:
+    index, doc_count, clause_count = get_index()
+    st.caption(f"Using the sample corpus: {doc_count} contracts, {clause_count} clauses.")
+    using_sample_corpus = True
 
 api_key = st.secrets.get("GROQ_API_KEY")
 model = st.secrets.get("GROQ_MODEL", DEFAULT_MODEL)
@@ -68,7 +94,8 @@ example_queries = [
     "Summarize the confidentiality obligations that survive termination.",
 ]
 query = st.text_input("Your question", placeholder=example_queries[0])
-st.caption("Try: " + " · ".join(f"*{q}*" for q in example_queries))
+if using_sample_corpus:
+    st.caption("Try: " + " · ".join(f"*{q}*" for q in example_queries))
 
 if st.button("Ask", type="primary") and query:
     if not api_key:

@@ -91,6 +91,10 @@ A free-hosted, lightweight public preview runs the real retrieval + citation-gro
 Groq's free API (Streamlit's free tier has no GPU). See
 [`docs/AMD_VERIFICATION.md`](docs/AMD_VERIFICATION.md) for the actual AMD-backed run.
 
+You can either query the bundled sample contracts, or **upload your own `.txt`/`.pdf` document**
+and query it directly — the same real ingest → chunk → index → retrieve → generate pipeline runs
+against whatever you upload, in-session, nothing precomputed.
+
 - **Hosted URL**: _add once deployed via [Streamlit Community Cloud](https://share.streamlit.io)_
 - **Run it yourself**:
   ```bash
