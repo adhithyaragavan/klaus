@@ -95,7 +95,8 @@ You can either query the bundled sample contracts, or **upload your own `.txt`/`
 and query it directly — the same real ingest → chunk → index → retrieve → generate pipeline runs
 against whatever you upload, in-session, nothing precomputed.
 
-- **Hosted URL**: _add once deployed via [Streamlit Community Cloud](https://share.streamlit.io)_
+- **Hosted URL**: [jmfqee34jqzxmdav9bxqws.streamlit.app](https://jmfqee34jqzxmdav9bxqws.streamlit.app)
+  (Community Cloud apps sleep after inactivity — first load after a while may take ~30-60s to wake up.)
 - **Run it yourself**:
   ```bash
   pip install -r preview_app/requirements.txt
