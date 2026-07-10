@@ -101,6 +101,34 @@ the actual entry for the query above, captured directly from a real run — note
 {"timestamp": "2026-07-10T12:21:44.303148+00:00", "query": "What is the data-breach notification window in each vendor contract?", "retrieved_clause_ids": ["vendor_umbrella_saas.txt::Section 3.2", "vendor_acme_nda.txt::Section 3.2", "vendor_globex_msa.txt::Section 3.3", "vendor_initech_dpa.txt::Section 3.4", "vendor_wayne_supply.txt::Section 3.3", "vendor_initech_dpa.txt::Section 4.2"], "answer": {"answer": "The data-breach notification windows in each vendor contract are as follows: In the vendor_umbrella_saas.txt contract, there is no specific timeframe mentioned for breach notification (Section 3.2). In the vendor_acme_nda.txt contract, the notification must occur within seventy-two (72) hours (Section 3.2). In the vendor_globex_msa.txt contract, the notification must occur within five (5) business days of confirming the incident (Section 3.3). In the vendor_initech_dpa.txt contract, the notification must occur within twenty-four (24) hours of becoming aware of the incident (Section 3.4). In the vendor_wayne_supply.txt contract, the notification must occur within ten (10) business days of discovering the unauthorized access (Section 3.3).", "citations": [{"document": "vendor_umbrella_saas.txt", "clause": "Section 3.2", "quote_or_paraphrase": "Vendor does not commit to a specific notification timeframe"}, {"document": "vendor_acme_nda.txt", "clause": "Section 3.2", "quote_or_paraphrase": "Vendor shall notify Company within seventy-two (72) hours"}, {"document": "vendor_globex_msa.txt", "clause": "Section 3.3", "quote_or_paraphrase": "Vendor shall notify Company within five (5) business days"}, {"document": "vendor_initech_dpa.txt", "clause": "Section 3.4", "quote_or_paraphrase": "Vendor shall notify Company within twenty-four (24) hours"}, {"document": "vendor_wayne_supply.txt", "clause": "Section 3.3", "quote_or_paraphrase": "Vendor shall notify Company within ten (10) business days"}]}, "backend": "rocm_vllm"}
 ```
 
+## Throughput & latency benchmark
+
+Measured with vLLM's own `vllm bench serve` — the benchmark tool ROCm's own documentation
+recommends for AMD GPU benchmarking — against the running Qwen3-14B endpoint. 20 concurrent
+requests fired at once (`request_rate=inf`), 1024-token inputs, 128-token outputs:
+
+```
+vllm bench serve --backend vllm --model Qwen/Qwen3-14B --base-url http://localhost:8000 --num-prompts 20
+```
+
+| Metric | Value |
+|---|---|
+| Successful requests | 20 / 20 (0 failed) |
+| Benchmark duration | 20.48 s |
+| Request throughput | 0.98 req/s |
+| Output token throughput | 124.99 tok/s |
+| Peak output token throughput | 240.00 tok/s |
+| Total token throughput (in + out) | 1,124.91 tok/s |
+| Mean / median TTFT (time to first token) | 5,798.62 ms / 5,891.71 ms |
+| P99 TTFT | 9,876.53 ms |
+| Mean / median TPOT (time per output token) | 112.71 ms / 112.08 ms |
+
+Note: TTFT here reflects **20 simultaneous requests fired as a single burst** (a max-concurrency
+stress test, not a single interactive user) — under that load, requests queue for GPU time
+before their first token, which is expected and why TTFT is seconds rather than milliseconds.
+The single-request interactive case is what's shown above in "Live HTTP verification" and the
+real Klaus queries, both of which returned promptly for one request at a time.
+
 ## Summary
 
 - Real AMD GPU (Radeon/RDNA3, gfx1100), real ROCm 7.2 + vLLM stack, real `Qwen/Qwen3-14B`
@@ -108,3 +136,5 @@ the actual entry for the query above, captured directly from a real run — note
 - Real HTTP round trip against the running vLLM OpenAI-compatible endpoint.
 - Real end-to-end Klaus queries through `ROCmVLLMBackend`, with grounded answers and correct
   citations, logged to the append-only audit log with `"backend": "rocm_vllm"`.
+- Real throughput/latency benchmark via vLLM's own tooling, following ROCm's documented
+  benchmarking methodology: ~1,125 tok/s aggregate throughput under 20-way concurrent load.
