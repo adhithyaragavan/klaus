@@ -1,0 +1,61 @@
+GOODS AND EQUIPMENT SUPPLY AGREEMENT
+
+This Goods and Equipment Supply Agreement ("Agreement") is entered into as of June 1, 2025, by
+and between Klaus Compliance Solutions, Inc. ("Company") and Wayne Industrial Supply Co.
+("Vendor"), for the supply of office and data center hardware.
+
+Section 1. Definitions
+
+1.1 "Confidential Information" means non-public information disclosed by either Party in
+connection with this Agreement, including pricing terms, purchase forecasts, and Company's
+facility specifications.
+
+1.2 "Order" means a purchase order issued by Company and accepted by Vendor under this
+Agreement.
+
+Section 2. Confidentiality
+
+2.1 Each Party shall protect the other Party's Confidential Information with the same degree of
+care it uses for its own confidential information, and in no event less than reasonable care.
+
+2.2 Neither Party shall disclose the pricing terms of this Agreement to any third party without
+the other Party's prior written consent.
+
+2.3 Survival. The confidentiality obligations under this Section 2 shall survive termination of
+this Agreement for a period of one (1) year.
+
+Section 3. Data Handling and Security
+
+3.1 Vendor's access to Company data under this Agreement is limited to invoicing and shipping
+information necessary to fulfill Orders.
+
+3.2 Vendor shall not use Company's invoicing or shipping data for any purpose other than
+fulfilling Orders and shall not sell or share such data with third parties.
+
+3.3 Breach Notification. Vendor shall notify Company within ten (10) business days of
+discovering any unauthorized access to Company's invoicing or shipping data held by Vendor.
+
+Section 4. Limitation of Liability
+
+4.1 Each Party's aggregate liability arising out of this Agreement shall not exceed three
+hundred thousand dollars ($300,000).
+
+4.2 Vendor's liability for defective goods is additionally limited to repair, replacement, or
+refund of the purchase price of the affected goods, at Vendor's option.
+
+Section 5. Term and Termination
+
+5.1 This Agreement remains in effect for twenty-four (24) months from the effective date.
+
+5.2 Either Party may terminate this Agreement for convenience upon forty-five (45) days' prior
+written notice.
+
+5.3 Company may terminate immediately if Vendor fails to fulfill three (3) or more Orders within
+their agreed delivery windows in any rolling six (6) month period.
+
+Section 6. General Provisions
+
+6.1 Governing Law. This Agreement is governed by the laws of the State of New Jersey.
+
+6.2 Force Majeure. Neither Party is liable for delays caused by events beyond its reasonable
+control, including natural disasters, labor disputes, and supply chain disruptions.

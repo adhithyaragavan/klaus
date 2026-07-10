@@ -1,0 +1,22 @@
+# Core pipeline
+sentence-transformers>=3.0.0
+faiss-cpu>=1.8.0
+rank-bm25>=0.2.2
+pypdf>=4.0.0
+numpy>=1.26.0
+
+# PII/PHI scan (src/pii_scan.py) — also requires `python -m spacy download en_core_web_sm` after install
+spacy>=3.7.0
+
+# LLM backends (src/generate.py) — all three backends speak plain HTTP, so no backend-specific SDK is needed
+requests>=2.31.0
+
+# Config
+python-dotenv>=1.0.0
+
+# Tests
+pytest>=8.0.0
+
+# Optional stretch (not installed by default — see ARCHITECTURE.md §3.8):
+# fastapi>=0.110.0
+# uvicorn>=0.29.0

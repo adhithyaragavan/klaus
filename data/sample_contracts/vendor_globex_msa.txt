@@ -1,0 +1,69 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement ("Agreement") is entered into as of January 15, 2025, by and
+between Klaus Compliance Solutions, Inc. ("Company") and Globex Systems, LLC ("Vendor"), for
+the provision of managed IT infrastructure support services.
+
+Section 1. Definitions
+
+1.1 "Confidential Information" has the meaning set forth in Section 2.1.
+
+1.2 "Services" means the managed infrastructure support services described in one or more
+Statements of Work executed under this Agreement.
+
+1.3 "Personal Data" means any information relating to an identified or identifiable natural
+person processed by Vendor in the course of providing the Services.
+
+Section 2. Confidentiality
+
+2.1 "Confidential Information" means all non-public technical, business, or financial
+information disclosed by one Party to the other in connection with this Agreement, including
+system architecture, network configurations, and Company's internal policies.
+
+2.2 The receiving Party shall protect the disclosing Party's Confidential Information using at
+least the same degree of care it uses to protect its own confidential information of similar
+importance, and in no event less than reasonable care.
+
+2.3 Survival. The obligations of confidentiality under this Section 2 shall survive termination
+of this Agreement for a period of two (2) years following the effective date of termination.
+
+Section 3. Data Handling and Security
+
+3.1 Vendor shall process Personal Data only as necessary to provide the Services and in
+accordance with Company's written instructions.
+
+3.2 Vendor shall maintain a written information security program that includes network
+segmentation, access logging, and encryption of Personal Data at rest and in transit.
+
+3.3 Breach Notification. Vendor shall notify Company of any confirmed unauthorized access to
+Personal Data within five (5) business days of confirming the incident, and shall cooperate with
+Company's investigation and any required regulatory notifications.
+
+Section 4. Limitation of Liability
+
+4.1 Each Party's aggregate liability arising out of this Agreement shall not exceed the total
+fees paid or payable by Company to Vendor in the twelve (12) months preceding the event giving
+rise to the claim.
+
+4.2 The limitation in Section 4.1 does not apply to claims arising from a Party's gross
+negligence, willful misconduct, or breach of Section 2 (Confidentiality).
+
+Section 5. Term and Termination
+
+5.1 This Agreement remains in effect for an initial term of twenty-four (24) months and renews
+automatically for successive twelve (12) month terms unless either Party provides notice of
+non-renewal at least sixty (60) days before the end of the then-current term.
+
+5.2 Either Party may terminate this Agreement for convenience upon sixty (60) days' prior
+written notice.
+
+5.3 Company may terminate immediately for cause if Vendor fails to meet the service levels
+specified in an applicable Statement of Work for two (2) consecutive calendar months.
+
+Section 6. General Provisions
+
+6.1 Governing Law. This Agreement is governed by the laws of the State of New York.
+
+6.2 Assignment. Neither Party may assign this Agreement without the prior written consent of
+the other Party, except in connection with a merger, acquisition, or sale of substantially all
+assets.

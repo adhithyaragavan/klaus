@@ -1,0 +1,84 @@
+MUTUAL NON-DISCLOSURE AND VENDOR EVALUATION AGREEMENT
+
+This Mutual Non-Disclosure and Vendor Evaluation Agreement ("Agreement") is entered into as of
+March 3, 2025, by and between Klaus Compliance Solutions, Inc. ("Company") and Acme Corporation
+("Vendor"), collectively the "Parties," in connection with Vendor's provision of enterprise
+procurement software for evaluation by Company.
+
+Section 1. Definitions
+
+1.1 "Confidential Information" means any non-public information disclosed by either Party,
+whether in written, oral, or electronic form, that is designated as confidential at the time of
+disclosure or that a reasonable person would understand to be confidential given the nature of
+the information and the circumstances of disclosure, including pricing, product roadmaps,
+security architecture, and customer lists.
+
+1.2 "Personal Data" means any information relating to an identified or identifiable natural
+person that is processed by either Party in connection with this Agreement.
+
+Section 2. Confidentiality
+
+2.1 Each Party agrees to hold the other Party's Confidential Information in strict confidence
+and not to disclose such Confidential Information to any third party without the prior written
+consent of the disclosing Party, except to employees and contractors with a legitimate need to
+know who are bound by confidentiality obligations at least as protective as those in this
+Agreement.
+
+2.2 Each Party agrees to use the other Party's Confidential Information solely for the purpose
+of evaluating and administering the vendor relationship contemplated by this Agreement.
+
+2.3 Survival. The confidentiality obligations set forth in this Section 2 shall survive
+termination or expiration of this Agreement for a period of three (3) years, except with
+respect to Confidential Information that constitutes a trade secret under applicable law, which
+shall remain protected for as long as it retains trade secret status.
+
+Section 3. Data Handling and Security
+
+3.1 Vendor shall implement and maintain commercially reasonable administrative, technical, and
+physical safeguards designed to protect Personal Data against unauthorized access, disclosure,
+alteration, or destruction, consistent with industry standards for software vendors handling
+enterprise procurement data.
+
+3.2 Breach Notification. In the event of a Security Incident involving unauthorized access to
+or disclosure of Personal Data, Vendor shall notify Company within seventy-two (72) hours of
+Vendor becoming aware of the incident, and shall provide Company with all information reasonably
+necessary for Company to meet its own regulatory notification obligations.
+
+3.3 Vendor shall not transfer Personal Data outside the jurisdiction in which it was collected
+without Company's prior written consent.
+
+Section 4. Limitation of Liability
+
+4.1 Except for breaches of Section 2 (Confidentiality) or a Party's indemnification obligations,
+each Party's aggregate liability arising out of or related to this Agreement shall not exceed
+five hundred thousand dollars ($500,000).
+
+4.2 Neither Party shall be liable for any indirect, incidental, special, or consequential
+damages, including lost profits, even if advised of the possibility of such damages.
+
+Section 5. Term and Termination
+
+5.1 This Agreement commences on the effective date and continues for twelve (12) months unless
+earlier terminated in accordance with this Section 5.
+
+5.2 Either Party may terminate this Agreement for convenience upon thirty (30) days' prior
+written notice to the other Party.
+
+5.3 Either Party may terminate this Agreement immediately upon written notice if the other
+Party materially breaches this Agreement and fails to cure such breach within fifteen (15) days
+of receiving written notice of the breach.
+
+Section 6. General Provisions
+
+6.1 Governing Law. This Agreement is governed by the laws of the State of Delaware, without
+regard to its conflict of laws principles.
+
+6.2 Entire Agreement. This Agreement constitutes the entire agreement between the Parties with
+respect to its subject matter and supersedes all prior agreements and understandings, whether
+written or oral.
+
+Section 7. Notices
+
+7.1 All notices under this Agreement shall be sent to Vendor's authorized representative, John
+Whitfield, at john.whitfield@acmecorp.com or by phone at (312) 555-0148. For 1099 tax reporting
+purposes, Vendor's sole-proprietor taxpayer identification number is 512-34-6789.
