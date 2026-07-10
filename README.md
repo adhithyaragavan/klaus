@@ -1,5 +1,8 @@
 # Klaus
 
+[![tests](https://github.com/adhithyaragavan/klaus/actions/workflows/tests.yml/badge.svg)](https://github.com/adhithyaragavan/klaus/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **On-prem, citation-grounded document compliance assistant.**
 
 Klaus answers natural-language questions about a set of contracts and never returns a claim
