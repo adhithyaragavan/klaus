@@ -4,17 +4,19 @@
 
 Klaus answers natural-language questions about a set of contracts and never returns a claim
 without a traceable source — every answer includes the exact document and clause it came from.
-It's built to run entirely inside a customer's own infrastructure: ingest, embedding, retrieval,
-and generation all happen with zero outbound network calls in the default configuration.
+It's built to run entirely inside an organization's own infrastructure: ingest, embedding,
+retrieval, and generation all happen with zero outbound network calls in the default
+configuration, which matters for regulated or contractually sensitive documents (legal, vendor
+contracts, internal policy) that can't be sent to a third-party API.
 
-Built for the AMD Developer Hackathon: ACT II, Track 3 (Unicorn). Full system design lives in
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
+Full system design lives in [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
-**Demo vertical:** vendor contract compliance review. `data/sample_contracts/` contains 7
+**Example domain: vendor contract compliance review.** `data/sample_contracts/` contains 7
 synthetic vendor agreements (NDA, MSA, DPA, SaaS subscription, consulting, supply, cloud hosting)
 covering confidentiality, termination, liability-cap, and data-handling clauses — including two
-deliberately built-in compliance risks: a vendor with a vague, undefined data-breach notification
-window, and a vendor with explicitly uncapped liability.
+deliberately built-in compliance risks (a vendor with a vague, undefined data-breach notification
+window, and a vendor with explicitly uncapped liability) to exercise the citation-grounding
+guarantees against realistic edge cases.
 
 ## Setup
 
@@ -30,10 +32,10 @@ cp .env.example .env
 # edit .env to configure an LLM backend — see "LLM Backends" below
 ```
 
-## Running the demo
+## Usage
 
 ```bash
-bash scripts/run_demo.sh
+bash scripts/run.sh
 ```
 
 This loads `data/sample_contracts/`, runs the PII/PHI scan, builds the hybrid index, and drops
@@ -46,18 +48,18 @@ you into an interactive query loop. Try asking:
 Every answer is printed with its citations (document + clause) and appended to
 `audit_log/klaus_audit.jsonl`. Type `exit` to quit.
 
-> **No AMD ROCm/vLLM instance handy?** The default backend (`ROCmVLLMBackend`) is what the
-> live demo actually runs on, but it needs a real vLLM server reachable at `ROCM_VLLM_BASE_URL`.
+> **No AMD ROCm/vLLM instance handy?** The default backend (`ROCmVLLMBackend`) is the primary,
+> production-grade path, but it needs a real vLLM server reachable at `ROCM_VLLM_BASE_URL`.
 > To try Klaus locally without one, set `KLAUS_LLM_BACKEND=local_dev` in `.env` and point
 > `OLLAMA_BASE_URL`/`OLLAMA_MODEL` at a local [Ollama](https://ollama.com) instance. This is the
 > offline-iteration-only path (see `LLM Backends` below) — fine for trying out retrieval and
-> citation grounding, but it's a small model and not what the recorded demo uses.
+> citation grounding, but it runs a much smaller model than the production backend.
 
 ### Via Docker
 
 ```bash
-# note the explicit --platform: required if building on Apple Silicon, since the hackathon
-# submission target is linux/amd64
+# note the explicit --platform: required if building on Apple Silicon, since the target
+# deployment platform is linux/amd64
 docker buildx build --platform linux/amd64 -t klaus:latest -f docker/Dockerfile .
 docker run --rm -it --env-file .env klaus:latest
 ```
@@ -78,21 +80,21 @@ Klaus's generation layer sits behind a swap-friendly `LLMBackend` protocol
 
 | Backend | `KLAUS_LLM_BACKEND` | Role | Network |
 |---|---|---|---|
-| `ROCmVLLMBackend` | `rocm_vllm` (default) | **Primary — the backend the live demo runs on.** `Qwen/Qwen3-14B` served via vLLM on an AMD Developer Cloud Radeon/RDNA3 (gfx1100) instance — chosen for vLLM's native, first-class support (Gemma 4 was too new at build time and only had a bug-prone generic fallback implementation). This is what makes "nothing leaves the box" a demonstrated fact rather than a slide claim. | On-prem only |
-| `LocalDevBackend` | `local_dev` | Offline iteration only, via a local Ollama instance. Used during this build to test retrieval/chunking/citation logic before AMD cloud access was wired up. **Never used in the live/recorded demo.** | Local only |
+| `ROCmVLLMBackend` | `rocm_vllm` (default) | **Primary, production backend.** Serves `Qwen/Qwen3-14B` via vLLM on AMD ROCm hardware (verified against a Radeon/RDNA3, gfx1100, instance). This is what makes "nothing leaves the box" a verified, tested fact rather than a design claim. | On-prem only |
+| `LocalDevBackend` | `local_dev` | Offline iteration only, via a local Ollama instance — fast local dev loop for retrieval/chunking/citation logic without needing a GPU. **Not intended for production use.** | Local only |
 
 See `.env.example` for the full set of environment variables each backend reads (base URLs,
 model names, API key). No key or secret is ever hardcoded — everything comes from the
 environment.
 
-## Hackathon-simplified vs. production-real
+## Current Scope vs. Production Roadmap
 
-| Area | This demo | Production |
+| Area | Current implementation | Production roadmap |
 |---|---|---|
 | Core pipeline network calls | Zero, by design (ingest → embed → retrieve → generate) | Same — this is a hard requirement, not a simplification |
-| Primary LLM backend | `ROCmVLLMBackend` (`Qwen/Qwen3-14B`) against an AMD Developer Cloud Radeon/RDNA3 instance | Same backend/approach: `vLLM` on ROCm, scaling to AMD Instinct/CDNA GPUs for larger deployments |
+| Primary LLM backend | `ROCmVLLMBackend` (`Qwen/Qwen3-14B`) against an AMD Radeon/RDNA3 instance | Same backend/approach: `vLLM` on ROCm, scaling to AMD Instinct/CDNA GPUs for larger deployments |
 | Vector store | FAISS flat index, in-memory, rebuilt on every run | Persistent, likely distributed vector store for larger corpora |
-| Embedding model | `sentence-transformers/all-MiniLM-L6-v2` — small, CPU-friendly, sufficient for the ~100-clause demo corpus | Possibly a larger or domain-tuned embedding model |
+| Embedding model | `sentence-transformers/all-MiniLM-L6-v2` — small, CPU-friendly, sufficient for the ~100-clause sample corpus | Possibly a larger or domain-tuned embedding model |
 | PII/PHI scan | Regex (SSN/email/phone) + spaCy `en_core_web_sm` NER, detect-and-log only — the small NER model does produce some false positives (e.g. flagging "AES-256" as a person name), which a human reviewer would triage | Larger/more accurate NER, likely with redaction workflows, not just detection |
 | Audit log | Local append-only JSONL file | Same append-only guarantee, but production would add replication/rotation/backup |
 | Multi-tenancy | None — single corpus, single tenant | Per-customer/per-department index isolation (see `ARCHITECTURE.md` §8) |

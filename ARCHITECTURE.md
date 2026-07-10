@@ -1,6 +1,8 @@
 # Klaus — System Architecture
 
-On-prem, citation-grounded document compliance intelligence. This document is the technical spec Claude Code should build against — it defines components, data flow, interfaces, and constraints so implementation stays consistent across build sessions.
+On-prem, citation-grounded document compliance intelligence. This document describes Klaus's
+system architecture — components, data flow, interfaces, and constraints — as the reference for
+how the pieces fit together and why.
 
 ---
 
@@ -61,7 +63,7 @@ On-prem, citation-grounded document compliance intelligence. This document is th
 ## 3. Components
 
 ### 3.1 Ingest Loader (`src/ingest.py`)
-- Input: a directory of contract files (PDF or `.txt` for the hackathon demo).
+- Input: a directory of contract files (PDF or `.txt`).
 - Output: raw text per document, with page boundaries preserved where available.
 - Responsibility: file I/O only. No chunking logic here.
 
@@ -76,11 +78,11 @@ On-prem, citation-grounded document compliance intelligence. This document is th
     "page": 3
   }
   ```
-- Responsibility: split on section/clause numbering and headers (regex-based is fine for the demo: patterns like `^\d+(\.\d+)*\s`, `^Section \d+`, `^Article \w+`). Falls back to paragraph-level splitting if no numbering is detected — but flag those chunks as `"granularity": "paragraph"` so downstream citation is honest about precision.
+- Responsibility: split on section/clause numbering and headers (regex-based patterns like `^\d+(\.\d+)*\s`, `^Section \d+`, `^Article \w+`). Falls back to paragraph-level splitting if no numbering is detected — but flags those chunks as `"granularity": "paragraph"` so downstream citation is honest about precision.
 
 ### 3.3 PII/PHI Scan (`src/pii_scan.py`)
 - Input: list of `Clause` objects.
-- Output: a warnings list `[{"doc_id", "clause_id", "span", "type"}]` — does not modify or block ingestion, just surfaces findings (this is a detection-and-log demo, not redaction).
+- Output: a warnings list `[{"doc_id", "clause_id", "span", "type"}]` — does not modify or block ingestion, just surfaces findings (detection-and-log, not redaction).
 - Method: regex for structured PII (SSN, email, phone) + spaCy `en_core_web_sm` NER for named individuals.
 
 ### 3.4 Hybrid Index Build (`src/index.py`)
@@ -92,7 +94,7 @@ On-prem, citation-grounded document compliance intelligence. This document is th
 
 ### 3.5 Retriever (`src/retrieve.py`)
 - Input: query string, `IndexHandle`, `top_k` (default 6).
-- Output: ranked list of `Clause` + score, combining dense and BM25 results (simple approach: normalize both score sets 0-1 and take a weighted sum, e.g. 0.6 dense / 0.4 BM25 — tune if time allows, don't over-engineer).
+- Output: ranked list of `Clause` + score, combining dense and BM25 results (normalize both score sets 0-1 and take a weighted sum, currently 0.6 dense / 0.4 BM25).
 - Interface: `retrieve(query: str, index: IndexHandle, top_k: int = 6) -> list[RetrievedClause]`
 
 ### 3.6 Generator (`src/generate.py`)
@@ -117,29 +119,26 @@ On-prem, citation-grounded document compliance intelligence. This document is th
   ```
   Two concrete implementations sit behind this protocol:
 
-  1. **`ROCmVLLMBackend` — primary (on-prem, the demoed default).** Serves `Qwen/Qwen3-14B`
-     via `vLLM` on an AMD Developer Cloud Radeon/RDNA3 (gfx1100) instance — chosen over Gemma
-     because vLLM has native, first-class support for Qwen3 (Gemma 4 was too new to have
-     anything but a generic, bug-prone fallback implementation at the time of the hackathon
-     build). This is the backend that *proves* the "nothing leaves the box" claim as a
-     demonstrated fact, not a slide bullet — the recorded demo runs its grounded queries
-     through this. Document setup/run instructions even if the AMD instance is only available
-     briefly, since the production pitch depends on it.
+  1. **`ROCmVLLMBackend` — primary, on-prem production backend.** Serves `Qwen/Qwen3-14B` via
+     `vLLM` on AMD ROCm hardware (verified against a Radeon/RDNA3, gfx1100, instance) — chosen
+     over Gemma because vLLM has native, first-class support for Qwen3 (Gemma 4 was too new at
+     the time this was built to have anything but a generic, bug-prone fallback implementation).
+     This is the backend that makes the "nothing leaves the box" claim a verified fact rather
+     than a design assumption.
   2. **`LocalDevBackend` — offline iteration only.** `llama-cpp-python` or Ollama with any small
-     GGUF model. Used only while iterating on retrieval/chunking/citation logic before AMD
-     cloud access is wired up; never shown in the live/recorded demo or referenced in the
-     pitch's technical claims.
+     GGUF model. Used for fast local iteration on retrieval/chunking/citation logic without
+     needing GPU access; not intended for production use.
 
 ### 3.7 Audit Logger (`src/audit_log.py`)
 - Input: query, retrieved clauses, generated answer, timestamp.
 - Output: one JSONL line appended to `audit_log/klaus_audit.jsonl`:
   ```json
-  {"timestamp": "...", "query": "...", "retrieved_clause_ids": [...], "answer": {...}, "backend": "local-llama"}
+  {"timestamp": "...", "query": "...", "retrieved_clause_ids": [...], "answer": {...}, "backend": "rocm_vllm"}
   ```
 - Responsibility: append-only, never overwrite or mutate prior entries.
 
 ### 3.8 App / Entry Point (`src/app.py`)
-- Wires the above into a CLI query loop for the demo, and optionally a minimal FastAPI endpoint (`POST /query`) if time allows.
+- Wires the above into a CLI query loop, and optionally a minimal FastAPI endpoint (`POST /query`).
 - Responsibility: orchestration only — no business logic lives here.
 
 ---
@@ -159,22 +158,22 @@ On-prem, citation-grounded document compliance intelligence. This document is th
 
 | Environment | LLM backend | Notes |
 |---|---|---|
-| Local dev (offline iteration only) | `LocalDevBackend` — `llama-cpp-python` / Ollama, any small GGUF | Fast iteration on retrieval/chunking/citation logic; never the demoed backend |
-| Hackathon demo / on-prem proof | `ROCmVLLMBackend` — `vLLM` serving `Qwen/Qwen3-14B` on an AMD Developer Cloud Radeon/RDNA3 (gfx1100) instance | **Primary demoed backend.** Runs the grounded queries in the recorded demo to prove "nothing leaves the box"; container still builds for `linux/amd64` |
-| Production target | `ROCmVLLMBackend` — `vLLM` on ROCm against AMD GPUs (Radeon/RDNA3 for the demo; Instinct/CDNA datacenter cards for larger-scale production deployments) | Same backend as the demo; this is the deployment the pitch's cost/privacy claims depend on |
+| Local dev (offline iteration only) | `LocalDevBackend` — `llama-cpp-python` / Ollama, any small GGUF | Fast iteration on retrieval/chunking/citation logic; not the production backend |
+| On-prem reference deployment | `ROCmVLLMBackend` — `vLLM` serving `Qwen/Qwen3-14B` on an AMD Radeon/RDNA3 (gfx1100) instance | **Primary, verified backend.** Demonstrates "nothing leaves the box" in practice, not just as a design claim; container builds for `linux/amd64` |
+| Production target | `ROCmVLLMBackend` — `vLLM` on ROCm against AMD GPUs (Radeon/RDNA3 verified; Instinct/CDNA datacenter cards for larger-scale deployments) | Same backend as the reference deployment; this is the deployment the system's cost/privacy guarantees depend on |
 
 ---
 
 ## 6. Non-Functional Requirements
 
 - **No hardcoded secrets.** All API keys/config via environment variables (`.env.example` documents every one).
-- **Containerized.** `docker/Dockerfile` builds a `linux/amd64` image that runs the full pipeline end-to-end via `scripts/run_demo.sh`.
+- **Containerized.** `docker/Dockerfile` builds a `linux/amd64` image that runs the full pipeline end-to-end via `scripts/run.sh`.
 - **Deterministic-ish citations.** Citation clause-ids must reference real `clause_id` values from the index — never fabricated section numbers.
 - **Graceful degradation.** If retrieval returns nothing relevant, the generator must say so rather than hallucinating an answer.
 
 ---
 
-## 7. Directory Structure (matches build prompt)
+## 7. Directory Structure
 
 ```
 klaus/
@@ -192,13 +191,13 @@ klaus/
     generate.py
     audit_log.py
     app.py
-  scripts/run_demo.sh
+  scripts/run.sh
   tests/test_pipeline.py
 ```
 
 ---
 
-## 8. Open Questions / Future Architecture (post-hackathon)
+## 8. Open Questions / Future Architecture
 
 - Multi-tenant isolation for the "Enterprise" tier (separate indices per department/customer).
 - Replacing regex-based clause splitting with a fine-tuned section-boundary detector for messier real-world contracts.

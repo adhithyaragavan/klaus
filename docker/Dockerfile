@@ -5,8 +5,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 # CPU-only torch wheel: the default PyPI torch build bundles CUDA runtime libraries that are
-# both unnecessary (this demo has no GPU access) and would blow well past the 10GB container
-# budget on their own.
+# unnecessary in this container (embedding/retrieval run on CPU; LLM inference happens against
+# the external ROCm/vLLM service) and would blow well past the 10GB image budget on their own.
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir -r requirements.txt \
     && python -m spacy download en_core_web_sm
@@ -14,8 +14,8 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 COPY src/ src/
 COPY data/ data/
 COPY scripts/ scripts/
-COPY ARCHITECTURE.md CLAUDE.md README.md ./
+COPY ARCHITECTURE.md README.md ./
 
-RUN chmod +x scripts/run_demo.sh
+RUN chmod +x scripts/run.sh
 
-CMD ["bash", "scripts/run_demo.sh"]
+CMD ["bash", "scripts/run.sh"]
