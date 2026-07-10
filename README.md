@@ -9,10 +9,29 @@ Klaus answers natural-language questions about a set of contracts and never retu
 without a traceable source — every answer includes the exact document and clause it came from.
 It's built to run entirely inside an organization's own infrastructure: ingest, embedding,
 retrieval, and generation all happen with zero outbound network calls in the default
-configuration, which matters for regulated or contractually sensitive documents (legal, vendor
-contracts, internal policy) that can't be sent to a third-party API.
+configuration — which isn't just a technical nicety, it's what makes the product usable at all
+for buyers under real legal constraints: a HIPAA Business Associate Agreement most consumer LLM
+APIs don't cover by default, GDPR data-residency and Standard Contractual Clause requirements,
+or CMMC/ITAR air-gap mandates for defense and government contractors.
 
 Full system design lives in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## Why citation-grounding, not drafting speed
+
+Most AI contract tools compete on how fast they draft or redline. That's a real feature, but it
+sidesteps the actual adoption blocker: **92% of contract-management errors are human error**,
+and organizations lose an average of **8.6% of total contract spend annually to cost leakage**
+from exactly the kind of missed clause a fast-but-unverifiable AI summary would also miss.
+Meanwhile **80% of procurement teams already use AI in contracting** — the market isn't
+AI-skeptical, it's evidence-skeptical. The open question for regulated buyers isn't "can AI read
+my contracts," it's "can I trust an answer I didn't verify myself."
+
+Klaus's answer is structural, not a prompting trick: every claim is checked against real
+retrieved clause metadata before it's returned, a failed citation gets one retry then a clear
+refusal rather than a guess, and every query — successful or rejected — is written to an
+append-only audit log. That's the trust mechanism a compliance team actually needs before they
+can adopt AI-assisted review at all, not a speed optimization on top of a workflow they already
+trust.
 
 > **AMD compute usage.** The production backend (`ROCmVLLMBackend`) serves `Qwen/Qwen3-14B` via
 > `vLLM` on AMD ROCm hardware (verified against a Radeon/RDNA3, `gfx1100`, instance) — this is
