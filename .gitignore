@@ -5,3 +5,4 @@ audit_log/*.jsonl
 .env
 .DS_Store
 CLAUDE.md
+.streamlit/secrets.toml

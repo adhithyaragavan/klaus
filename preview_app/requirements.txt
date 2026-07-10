@@ -1,0 +1,10 @@
+# Preview-app-only dependencies. Kept separate from the core requirements.txt so the
+# production Docker image never picks these up (see CLAUDE.md "don't add new top-level
+# dependencies without a good reason" — that constraint governs the core system, not this
+# free-hosted preview surface).
+streamlit>=1.38.0
+sentence-transformers>=3.0.0
+faiss-cpu>=1.8.0
+rank-bm25>=0.2.2
+numpy>=1.26.0
+requests>=2.31.0
